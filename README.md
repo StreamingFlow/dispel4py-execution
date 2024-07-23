@@ -1,4 +1,5 @@
-# Execution Instructions
+![Laminar Logo](logo.webp)
+# Laminar Execution Instructions
 
 The following instructions will allow you to run the Flask application which executes dispel4py workflows 
 
