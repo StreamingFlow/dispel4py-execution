@@ -5,7 +5,7 @@ The following instructions will allow you to run the Flask application which exe
 # Docker
 Clone repository 
 ```
-git clone https://github.com/Laminar-2/dispel4py-execution.git
+git clone https://github.com/StreamingFlow/dispel4py-execution.git
 ```
 Then enter directory by
 ```
