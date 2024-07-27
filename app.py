@@ -130,6 +130,7 @@ def run_workflow():
 
     #handle imports 
     for _import in import_list:
+        print("-------- importing %s" %_import)
         install(_import)
 
     if workflow: #checking if user specified graph in registry
