@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   execuction:
     build:
@@ -13,8 +15,15 @@ services:
         DYNAMIC_SIMPLE: False
     ports:
       - ${LAMINAR_EXECUTION_PORT:-5000}:5000
-    
+    networks:
+      - laminar-network
   
   redis:
     image: redis
-    
+    networks:
+      - laminar-network
+
+networks:
+  laminar-network:
+    external: true
+

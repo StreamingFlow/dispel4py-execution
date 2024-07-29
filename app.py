@@ -22,6 +22,7 @@ import sys
 import configparser
 import json
 import pathlib
+import time
 from multiprocessing import Process, Lock, SimpleQueue
 
 def createConfigFile():
@@ -111,17 +112,33 @@ def deserialize(data):
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route('/resource', methods=['PUT'])
 def acquire_resource():
-    print("Acquiring resources")
+    app.logger.info("---------- Acquiring resources")
+    app.logger.info("Request form data: %s", request.form)
+    app.logger.info("Request files: %s", request.files)
+
     user = request.form["user"]
-    #data = request.json()
-    pathlib.Path(os.path.join("cache", user)).mkdir(parents=True, exist_ok=True)
+    user_dir = os.path.join("cache", user)
+    pathlib.Path(user_dir).mkdir(parents=True, exist_ok=True)
+
     for file in request.files.getlist("files"):
-        with open(os.path.join("cache", user, file.filename), "w+") as f:
-            pass
-        file.save(os.path.join("cache", user, file.filename))
+        app.logger.info("Processing file: %s", file.filename)
+        file_path = os.path.join(user_dir, file.filename)
+        try:
+            with open(file_path, "wb") as f:
+                file_content = file.read()
+                app.logger.info("File content size: %d bytes", len(file_content))
+                f.write(file_content)
+            app.logger.info("Saved file to %s", file_path)
+        except Exception as e:
+            app.logger.error("Error saving file %s: %s", file.filename, str(e))
+
     return "Success"
+
+
+
 
 @app.route('/run', methods=['GET', 'POST'])
 def run_workflow():
@@ -142,12 +159,10 @@ def run_workflow():
     import_list = list(filter(None, imports.split(',')))
     
     #todo: fix formatting 
-    print("--------- import list :", import_list)
 
     #handle imports 
     for _import in import_list:
         if _import != "No imports available":
-            print("-------- importing %s" %_import)
             install(_import)
         #import_module(_import)
 
@@ -193,12 +208,21 @@ def acquire_resources(resources: list[str], user: str):
         if not os.path.exists(os.path.join("cache", user, resource)):
             yield resource
 
-def check_resources(resources: list[str], user: str):
+
+def check_resources(resources: list[str], user: str, timeout: int = 60, check_interval: float = 0.5):
     for resource in resources:
         print("Looking for " + resource)
-        while not os.path.exists(os.path.join("cache", user, resource)):
-            pass
-        print("Found " + resource)
+        resource_path = os.path.join("cache", user, resource)
+        start_time = time.time()
+        while not os.path.exists(resource_path):
+            if time.time() - start_time > timeout:
+                print(f"Timeout while waiting for {resource}")
+                break
+            print(f"Not found {resource}: {os.path.exists(resource_path)}")
+            time.sleep(check_interval)
+        if os.path.exists(resource_path):
+            print("Found " + resource)
+
 
 def run_process(processor_type, graph, producer, producer_name, args_dict, resources, user):
     # First find what resources we don't have
@@ -217,10 +241,17 @@ def run_process(processor_type, graph, producer, producer_name, args_dict, resou
         yield output
 
 def get_process_output(processor_type, graph, producer, producer_name, args_dict, resources, user):
+    #with open(resources[0] as f):
+        #print f.read()
     q = SimpleQueue()
+    #for resource in resources:
+    #    if not os.path.exists(resource):
+    #        print(f"Resource {resource} not found")
 
     def process_func(processor_type, graph, p, args_dict, user, q:SimpleQueue):
+        print("Before_check_resources")
         check_resources(resources, user) # waits for resources to arrive
+        print("After_check_resources")
         buffer = IOToQueue(q)
         pathlib.Path(os.path.join("cache", user)).mkdir(parents=True, exist_ok=True)
         os.chdir(os.path.join("cache", user))
@@ -248,7 +279,7 @@ def get_process_output(processor_type, graph, producer, producer_name, args_dict
         finally:
             q.put("END")
             sys.stdout = sys.__stdout__
-
+    print("Before_Process")
     Process(target=process_func, args=(processor_type, graph, {producer_name: producer}, args_dict, user, q)).start()
     
     while True:
@@ -293,4 +324,8 @@ def main():
     serve(app, host=('127.0.0.1' if os.getenv('EXECUTION_HOST') is None else os.getenv('EXECUTION_HOST')), port='5000')
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    app.logger.setLevel(logging.INFO)
     main()
+
