@@ -10,10 +10,11 @@ import codecs
 import cloudpickle as pickle 
 from flask import Flask, request, Response, stream_with_context, jsonify, send_from_directory
 from flask_cors import CORS
-
+import importlib
 from easydict import EasyDict as edict
 from io import StringIO 
 from waitress import serve
+import pkgutil
 import re
 import os
 import subprocess 
@@ -64,10 +65,25 @@ if not os.path.exists('./config.ini'):
     print("Could not find config file - beginning execution engine initialiser")
     createConfigFile()
 
+#def install(package):
+#    #todo: check if installed before install
+#    if package not in sys.modules: 
+#        subprocess.call(['pip', 'install', package])
+
 def install(package):
-    #todo: check if installed before install
-    if package not in sys.modules: 
-        subprocess.call(['pip', 'install', package])
+    if package in sys.modules:
+        print(f"{package} is already installed.")
+    elif pkgutil.find_loader(package) is not None:
+        print(f"{package} is a standard library module.")
+    else:
+        print(f"Installing package: {package}")
+        subprocess.call([sys.executable, "-m", "pip", "install", package])
+
+def import_module(module_name):
+    if module_name in sys.modules:
+        print(f"{module_name} is already imported.")
+    else:
+        globals()[module_name] = importlib.import_module(module_name)
 
 def deserialize_directory(data,path):
 
@@ -126,12 +142,14 @@ def run_workflow():
     import_list = list(filter(None, imports.split(',')))
     
     #todo: fix formatting 
-    print("import list :", import_list)
+    print("--------- import list :", import_list)
 
     #handle imports 
     for _import in import_list:
-        print("-------- importing %s" %_import)
-        install(_import)
+        if _import != "No imports available":
+            print("-------- importing %s" %_import)
+            install(_import)
+        #import_module(_import)
 
     if workflow: #checking if user specified graph in registry
         workflow_code = workflow["workflowCode"]
