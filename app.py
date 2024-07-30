@@ -66,10 +66,6 @@ if not os.path.exists('./config.ini'):
     print("Could not find config file - beginning execution engine initialiser")
     createConfigFile()
 
-#def install(package):
-#    #todo: check if installed before install
-#    if package not in sys.modules: 
-#        subprocess.call(['pip', 'install', package])
 
 def install(package):
     if package in sys.modules:
@@ -200,6 +196,7 @@ def run_workflow():
         if process != 1:
             print("Couldn't read Settings from config file - using default None")
         args_dict = None
+    
 
     return Response(stream_with_context(run_process(process, graph, unpickled_input_code, producer, edict(args_dict), resources, user)), mimetype="application/json")
 
@@ -241,17 +238,10 @@ def run_process(processor_type, graph, producer, producer_name, args_dict, resou
         yield output
 
 def get_process_output(processor_type, graph, producer, producer_name, args_dict, resources, user):
-    #with open(resources[0] as f):
-        #print f.read()
     q = SimpleQueue()
-    #for resource in resources:
-    #    if not os.path.exists(resource):
-    #        print(f"Resource {resource} not found")
 
     def process_func(processor_type, graph, p, args_dict, user, q:SimpleQueue):
-        print("Before_check_resources")
         check_resources(resources, user) # waits for resources to arrive
-        print("After_check_resources")
         buffer = IOToQueue(q)
         pathlib.Path(os.path.join("cache", user)).mkdir(parents=True, exist_ok=True)
         os.chdir(os.path.join("cache", user))
