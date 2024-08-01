@@ -142,7 +142,7 @@ def run_workflow():
     #todo check if request is post and error handle each param 
     data = request.get_json()
     
-    print(data)
+    #print(data)
 
     workflow_id = data["workflowId"]
     workflow = data["graph"]
