@@ -1,0 +1,12 @@
+{
+    "workflowId": 1,
+    "graph": {
+        "workflowCode": "encoded_workflow_code"
+    },
+    "inputCode": "encoded_input_code",
+    "process": 1,
+    "resources": ["resource1", "resource2"],
+    "imports": "import1,import2",
+    "user": "rosa"
+}
+

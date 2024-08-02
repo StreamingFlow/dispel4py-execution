@@ -14,16 +14,16 @@ import importlib
 from easydict import EasyDict as edict
 from io import StringIO 
 from waitress import serve
-import pkgutil
 import re
 import os
 import subprocess 
 import sys
+import pkgutil
 import configparser
 import json
 import pathlib
-import time
 from multiprocessing import Process, Lock, SimpleQueue
+
 
 def createConfigFile():
     config = configparser.ConfigParser()
@@ -66,7 +66,6 @@ if not os.path.exists('./config.ini'):
     print("Could not find config file - beginning execution engine initialiser")
     createConfigFile()
 
-
 def install(package):
     if package in sys.modules:
         print(f"{package} is already installed.")
@@ -81,6 +80,8 @@ def import_module(module_name):
         print(f"{module_name} is already imported.")
     else:
         globals()[module_name] = importlib.import_module(module_name)
+
+
 
 def deserialize_directory(data,path):
 
@@ -102,41 +103,23 @@ def deserialize_directory(data,path):
             os.makedirs(item_path,exist_ok=True)
             deserialize_directory(item_data["contents"], item_path)
 
-
 def deserialize(data):
-    # Importing the necessary module before deserialization
     return pickle.loads(codecs.decode(data.encode(), "base64"))
 
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route('/resource', methods=['PUT'])
 def acquire_resource():
-    app.logger.info("---------- Acquiring resources")
-    app.logger.info("Request form data: %s", request.form)
-    app.logger.info("Request files: %s", request.files)
-
+    print("Acquiring resources")
     user = request.form["user"]
-    user_dir = os.path.join("cache", user)
-    pathlib.Path(user_dir).mkdir(parents=True, exist_ok=True)
-
+    #data = request.json()
+    pathlib.Path(os.path.join("cache", user)).mkdir(parents=True, exist_ok=True)
     for file in request.files.getlist("files"):
-        app.logger.info("Processing file: %s", file.filename)
-        file_path = os.path.join(user_dir, file.filename)
-        try:
-            with open(file_path, "wb") as f:
-                file_content = file.read()
-                app.logger.info("File content size: %d bytes", len(file_content))
-                f.write(file_content)
-            app.logger.info("Saved file to %s", file_path)
-        except Exception as e:
-            app.logger.error("Error saving file %s: %s", file.filename, str(e))
-
+        with open(os.path.join("cache", user, file.filename), "w+") as f:
+            pass
+        file.save(os.path.join("cache", user, file.filename))
     return "Success"
-
-
-
 
 @app.route('/run', methods=['GET', 'POST'])
 def run_workflow():
@@ -144,6 +127,7 @@ def run_workflow():
     #todo check if request is post and error handle each param 
     data = request.get_json()
     
+    print(data)
 
     workflow_id = data["workflowId"]
     workflow = data["graph"]
@@ -152,37 +136,31 @@ def run_workflow():
     resources = data["resources"]
     imports = data["imports"]
     user = data["user"]
-    module_source_code = data["moduleSourceCode"]
 
-
-    
+    imports="random,"
     import_list = list(filter(None, imports.split(',')))
     
     #todo: fix formatting 
+    print("import list :", import_list)
 
     #handle imports 
-    for _import in import_list:
-        if _import != "No imports available":
-            install(_import)
-        #import_module(_import)
+    import_list = list(filter(None, imports.split(',')))
+    print("import list :", import_list)
 
-    #handle dynamic imports from the CLI
-    if module_source_code:
-        module_name = "module_name"
-        spec = importlib.util.spec_from_loader(module_name, loader=None)
-        mod = importlib.util.module_from_spec(spec)
-        exec(module_source_code, mod.__dict__)
-        sys.modules[module_name] = mod
-        print(f"Module {module_name} imported successfully.")
+    for _import in import_list:
+        print("-------- importing %s" % _import)
+        install(_import)
+        import_module(_import)
 
     if workflow: #checking if user specified graph in registry
         workflow_code = workflow["workflowCode"]
+        print("--------- OPTION 1 %s" %workflow)
     else:
         workflow_code = data["workflowCode"] #direct code 
+        print("--------- OPTION 2 %s" %workflow_code)
 
     unpickled_workflow_code  = deserialize(workflow_code)
     unpickled_input_code  = deserialize(inputCode)
-
 
     graph: WorkflowGraph = unpickled_workflow_code #Code execution 
     nodes = graph.get_contained_objects() #nodes in graph 
@@ -210,7 +188,6 @@ def run_workflow():
         if process != 1:
             print("Couldn't read Settings from config file - using default None")
         args_dict = None
-    
 
     return Response(stream_with_context(run_process(process, graph, unpickled_input_code, producer, edict(args_dict), resources, user)), mimetype="application/json")
 
@@ -219,21 +196,12 @@ def acquire_resources(resources: list[str], user: str):
         if not os.path.exists(os.path.join("cache", user, resource)):
             yield resource
 
-
-def check_resources(resources: list[str], user: str, timeout: int = 60, check_interval: float = 0.5):
+def check_resources(resources: list[str], user: str):
     for resource in resources:
         print("Looking for " + resource)
-        resource_path = os.path.join("cache", user, resource)
-        start_time = time.time()
-        while not os.path.exists(resource_path):
-            if time.time() - start_time > timeout:
-                print(f"Timeout while waiting for {resource}")
-                break
-            print(f"Not found {resource}: {os.path.exists(resource_path)}")
-            time.sleep(check_interval)
-        if os.path.exists(resource_path):
-            print("Found " + resource)
-
+        while not os.path.exists(os.path.join("cache", user, resource)):
+            pass
+        print("Found " + resource)
 
 def run_process(processor_type, graph, producer, producer_name, args_dict, resources, user):
     # First find what resources we don't have
@@ -283,7 +251,7 @@ def get_process_output(processor_type, graph, producer, producer_name, args_dict
         finally:
             q.put("END")
             sys.stdout = sys.__stdout__
-    print("Before_Process")
+
     Process(target=process_func, args=(processor_type, graph, {producer_name: producer}, args_dict, user, q)).start()
     
     while True:
@@ -328,8 +296,4 @@ def main():
     serve(app, host=('127.0.0.1' if os.getenv('EXECUTION_HOST') is None else os.getenv('EXECUTION_HOST')), port='5000')
 
 if __name__ == '__main__':
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    app.logger.setLevel(logging.INFO)
     main()
-
