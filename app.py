@@ -102,7 +102,9 @@ def deserialize_directory(data,path):
             os.makedirs(item_path,exist_ok=True)
             deserialize_directory(item_data["contents"], item_path)
 
+
 def deserialize(data):
+    # Importing the necessary module before deserialization
     return pickle.loads(codecs.decode(data.encode(), "base64"))
 
 app = Flask(__name__)
@@ -142,7 +144,6 @@ def run_workflow():
     #todo check if request is post and error handle each param 
     data = request.get_json()
     
-    #print(data)
 
     workflow_id = data["workflowId"]
     workflow = data["graph"]
@@ -151,7 +152,10 @@ def run_workflow():
     resources = data["resources"]
     imports = data["imports"]
     user = data["user"]
+    #for handling dynamic imports from the CLI
+    module_source_code = data["moduleSourceCode"]
 
+    
     import_list = list(filter(None, imports.split(',')))
     
     #todo: fix formatting 
@@ -162,6 +166,15 @@ def run_workflow():
             install(_import)
         #import_module(_import)
 
+    #handle dynamic imports from the CLI
+    if module_source_code:
+        module_name = "module_name"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        mod = importlib.util.module_from_spec(spec)
+        exec(module_source_code, mod.__dict__)
+        sys.modules[module_name] = mod
+        print(f"Module {module_name} imported successfully.")
+
     if workflow: #checking if user specified graph in registry
         workflow_code = workflow["workflowCode"]
     else:
@@ -169,6 +182,7 @@ def run_workflow():
 
     unpickled_workflow_code  = deserialize(workflow_code)
     unpickled_input_code  = deserialize(inputCode)
+
 
     graph: WorkflowGraph = unpickled_workflow_code #Code execution 
     nodes = graph.get_contained_objects() #nodes in graph 
