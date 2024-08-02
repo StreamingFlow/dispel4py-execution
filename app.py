@@ -152,8 +152,8 @@ def run_workflow():
     resources = data["resources"]
     imports = data["imports"]
     user = data["user"]
+    #for handling dynamic imports from the CLI
     module_source_code = data["moduleSourceCode"]
-
 
     
     import_list = list(filter(None, imports.split(',')))
