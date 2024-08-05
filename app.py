@@ -154,7 +154,7 @@ def run_workflow():
     user = data["user"]
     #for handling dynamic imports from the CLI
     module_source_code = data["moduleSourceCode"]
-
+    module_name = data["moduleName"]
     
     import_list = list(filter(None, imports.split(',')))
     
@@ -168,7 +168,6 @@ def run_workflow():
 
     #handle dynamic imports from the CLI
     if module_source_code:
-        module_name = "module_name"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         mod = importlib.util.module_from_spec(spec)
         exec(module_source_code, mod.__dict__)
