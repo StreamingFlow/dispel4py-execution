@@ -35,8 +35,6 @@ docker-compose up --build
 By following these steps, you can ensure that the execution engine is properly configured and running efficiently.
 
 
-docker compose up
-```
 # Without Docker
 
 Clone repository 
