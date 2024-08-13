@@ -12,8 +12,29 @@ Then enter directory by
 ```
 cd dispel4py-execution 
 ```
-Compose the file to run the execution engine and redis server
+
+Run docker compose to load up the execution engine and redis server. The first time we recommend to use --build flag.
 ```
+docker compose up --build
+```
+Next time you could use:
+```
+docker compose up
+```
+
+If you need to rebuild the Docker containers (for instance, after making configuration changes), you can do so by following these steps:
+
+First, bring down the running containers:
+```
+docker-compose down
+```
+Then, rebuild and start the containers:
+```
+docker-compose up --build
+```
+By following these steps, you can ensure that the execution engine is properly configured and running efficiently.
+
+
 docker compose up
 ```
 # Without Docker
