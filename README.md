@@ -59,3 +59,9 @@ Run application
 ```
 python app.py
 ```
+
+## Other Laminar components
+
+The [laminar client](https://github.com/StreamingFlow/dispel4py-client) offers a user-friendly interface for registering and managing Processing Elements (PEs) as well as stream-based dispel4py workflows. For detailed guidance on how to interact with the system, please refer to the [user manual](https://github.com/StreamingFlow/dispel4py-client/wiki) available on the project's wiki.
+
+In addition, [laminar server](https://github.com/StreamingFlow/dispel4py-server) is another essential component that must be installed and running, either locally or remotely. The server acts as the central hub for managing communication and coordination between the client and the execution engine. It also communicates with the registry, which stores, workflows, PEs, and other essential metadata.
