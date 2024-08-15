@@ -8,6 +8,8 @@ When a user submits a workflow execution request, the engine processes it throug
 
 The engine communicates with the [Laminar Server](https://github.com/StreamingFlow/dispel4py-server) to retrieve and execute workflows on behalf of the [client](https://github.com/StreamingFlow/dispel4py-client), ensuring that all necessary resources are managed effectively. The results of an execution are directly sent back to the client.  Whether running locally or within a Docker container, the execution engine is responsible for the core computational tasks of the Laminar framework.
 
+Laminar takes full advantage of dispel4py’s capabilities, including automatic parallelization of workflows and dynamic resource provisioning when running workflows in parallel or dynamically. These features ensure efficient and scalable execution of data-intensive applications.
+
 # Laminar Execution Instructions
 
 The following instructions will allow you to run the Flask application which executes dispel4py workflows 
