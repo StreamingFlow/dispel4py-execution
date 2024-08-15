@@ -1,4 +1,13 @@
 ![Laminar Logo](logo.webp)
+
+# Introduction
+
+The Laminar Execution Engine is a crucial component of the Laminar framework, designed to execute dispel4py workflows. This is the only part of the system where [dispel4py](https://github.com/StreamingFlow/d4py), along with Redis, is installed and configured. The execution engine is built as a Flask application that handles and manages workflow execution requests from multiple users.
+
+When a user submits a workflow execution request, the engine processes it through a queue system. This ensures that multiple workflows can be handled efficiently and concurrently. The engine supports various processing modes, including simple sequential execution, multiprocessing, and dynamic processing using Redis, making it flexible and scalable to meet different computational needs.
+
+The engine communicates with the [Laminar Server]((https://github.com/StreamingFlow/dispel4py-server)) to retrieve and execute workflows on behalf of the [client]((https://github.com/StreamingFlow/dispel4py-client)), ensuring that all necessary resources are managed effectively. The results of an execution are directly sent back to the client.  Whether running locally or within a Docker container, the execution engine is responsible for the core computational tasks of the Laminar framework.
+
 # Laminar Execution Instructions
 
 The following instructions will allow you to run the Flask application which executes dispel4py workflows 
