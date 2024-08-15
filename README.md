@@ -6,7 +6,7 @@ The Laminar Execution Engine is a crucial component of the Laminar framework, de
 
 When a user submits a workflow execution request, the engine processes it through a queue system. This ensures that multiple workflows can be handled efficiently and concurrently. The engine supports various processing modes, including simple sequential execution, multiprocessing, and dynamic processing using Redis, making it flexible and scalable to meet different computational needs.
 
-The engine communicates with the [Laminar Server]((https://github.com/StreamingFlow/dispel4py-server)) to retrieve and execute workflows on behalf of the [client]((https://github.com/StreamingFlow/dispel4py-client)), ensuring that all necessary resources are managed effectively. The results of an execution are directly sent back to the client.  Whether running locally or within a Docker container, the execution engine is responsible for the core computational tasks of the Laminar framework.
+The engine communicates with the [Laminar Server](https://github.com/StreamingFlow/dispel4py-server) to retrieve and execute workflows on behalf of the [client](https://github.com/StreamingFlow/dispel4py-client), ensuring that all necessary resources are managed effectively. The results of an execution are directly sent back to the client.  Whether running locally or within a Docker container, the execution engine is responsible for the core computational tasks of the Laminar framework.
 
 # Laminar Execution Instructions
 
