@@ -14,7 +14,7 @@ Laminar takes full advantage of dispel4py’s capabilities, including automatic 
 
 The following instructions will allow you to run the Flask application which executes dispel4py workflows 
 
-# Docker
+# Docker Installation
 Clone repository 
 ```
 git clone https://github.com/StreamingFlow/dispel4py-execution.git
@@ -46,7 +46,7 @@ docker-compose up --build
 By following these steps, you can ensure that the execution engine is properly configured and running efficiently.
 
 
-# Without Docker
+# Non-Docker Installation
 
 Clone repository 
 ```
@@ -64,7 +64,7 @@ conda activate py10
 ```
 Install app modules
 ```
-pip install -r requirements_app.txt
+pip install -r requirements.txt
 ```
 Run application
 ```
