@@ -23,6 +23,7 @@ import configparser
 import json
 import pathlib
 import time
+import ast
 from multiprocessing import Process, Lock, SimpleQueue
 
 def createConfigFile():
@@ -136,11 +137,29 @@ def acquire_resource():
     return "Success"
 
 
+def extract_external_imports(code_string):
+    tree = ast.parse(code_string)
+    imports = set()
+
+    for node in ast.walk(tree):
+        # Handle 'import ...'
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                # Get the base package (e.g., 'os' from 'os.path')
+                imports.add(alias.name.split('.')[0])
+
+        # Handle 'from ... import ...'
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0:  # Level 0 means absolute import
+                if node.module:
+                    imports.add(node.module.split('.')[0])
+
+    return imports
 
 
 @app.route('/run', methods=['GET', 'POST'])
 def run_workflow():
-    print("Starting workflow")
+    print("Starting workflow", flush=True)
     #todo check if request is post and error handle each param 
     data = request.get_json()
     
@@ -150,20 +169,26 @@ def run_workflow():
     inputCode = data["inputCode"]
     process = data["process"]
     resources = data["resources"]
-    imports = data["imports"]
     user = data["user"]
     #for handling dynamic imports from the CLI
     module_source_code = data["moduleSourceCode"]
     module_name = data["moduleName"]
     
-    import_list = list(filter(None, imports.split(',')))
-    
+    import_list = extract_external_imports(module_source_code)
+
+    print(f"Preparing workflow execution for workflow: {workflow_id}", flush=True)
+
     #todo: fix formatting 
 
-    #handle imports 
+    #handle imports
+    if len(import_list) == 0:
+        print("No imports provided for current workflow.", flush=True)
+    else:
+        print(f"Installing packages: {import_list}", flush=True)
     for _import in import_list:
         if _import != "No imports available":
             install(_import)
+            print(f"Package {_import} installed successfully.", flush=True)
         #import_module(_import)
 
     #handle dynamic imports from the CLI
@@ -324,6 +349,7 @@ def get_first(graph: WorkflowGraph):
     #return id_dict[min_id]  
 
 def main():
+    print("Starting execution engine...")
     serve(app, host=('127.0.0.1' if os.getenv('EXECUTION_HOST') is None else os.getenv('EXECUTION_HOST')), port='5000')
 
 if __name__ == '__main__':
